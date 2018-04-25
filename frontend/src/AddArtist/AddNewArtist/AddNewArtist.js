@@ -6,9 +6,11 @@ import Link from 'Components/Link/Link';
 import Icon from 'Components/Icon';
 import LoadingIndicator from 'Components/Loading/LoadingIndicator';
 import TextInput from 'Components/Form/TextInput';
+import SearchTypeSelectInput from 'Components/Form/SearchTypeSelectInput';
 import PageContent from 'Components/Page/PageContent';
 import PageContentBodyConnector from 'Components/Page/PageContentBodyConnector';
-import AddNewArtistSearchResultConnector from './AddNewArtistSearchResultConnector';
+import AddNewArtistSearchResultConnector from './AddFromArtistSearch/AddNewArtistSearchResultConnector';
+import AddNewArtistAlbumSearchResultConnector from './AddFromAlbumSearch/AddNewArtistAlbumSearchResultConnector';
 import styles from './AddNewArtist.css';
 
 class AddNewArtist extends Component {
@@ -21,6 +23,7 @@ class AddNewArtist extends Component {
 
     this.state = {
       term: props.term || '',
+      searchType: props.searchType || 'artist',
       isFetching: false
     };
   }
@@ -60,11 +63,25 @@ class AddNewArtist extends Component {
 
     this.setState({ term: value, isFetching: hasValue }, () => {
       if (hasValue) {
-        this.props.onArtistLookupChange(value);
+        if (this.state.searchType === 'artist') {
+          this.props.onArtistLookupChange(value);
+        } else {
+          this.props.onAlbumLookupChange(value);
+        }
       } else {
         this.props.onClearArtistLookup();
       }
     });
+  }
+
+  onTypeInputChange = ({ value }) => {
+    this.setState({ searchType: value });
+    this.props.onClearArtistLookup();
+    if (value === 'artist') {
+      this.props.onArtistLookupChange(this.state.term);
+    } else {
+      this.props.onAlbumLookupChange(this.state.term);
+    }
   }
 
   onClearArtistLookupPress = () => {
@@ -82,6 +99,7 @@ class AddNewArtist extends Component {
     } = this.props;
 
     const term = this.state.term;
+    const searchType = this.state.searchType;
     const isFetching = this.state.isFetching;
 
     return (
@@ -95,13 +113,35 @@ class AddNewArtist extends Component {
               />
             </div>
 
-            <TextInput
-              className={styles.searchInput}
-              name="artistLookup"
-              value={term}
-              placeholder="eg. Breaking Benjamin, lidarr:854a1807-025b-42a8-ba8c-2a39717f1d25"
-              onChange={this.onSearchInputChange}
-              autoFocus={true}
+            {
+              searchType === 'artist' &&
+                <TextInput
+                  className={styles.searchInput}
+                  name="artistLookup"
+                  value={term}
+                  placeholder="eg. Breaking Benjamin, lidarr:854a1807-025b-42a8-ba8c-2a39717f1d25"
+                  onChange={this.onSearchInputChange}
+                  autoFocus={true}
+                />
+            }
+
+            {
+              searchType === 'album' &&
+                <TextInput
+                  className={styles.searchInput}
+                  name="albumLookup"
+                  value={term}
+                  placeholder="eg. We Are Not Alone, lidarr:9a03d313-0580-3f71-ae10-0e0996db3faa"
+                  onChange={this.onSearchInputChange}
+                  autoFocus={true}
+                />
+            }
+
+            <SearchTypeSelectInput
+              className={styles.searchTypeSelect}
+              name="addSearchTypeSelector"
+              value={searchType}
+              onChange={this.onTypeInputChange}
             />
 
             <Button
@@ -126,13 +166,29 @@ class AddNewArtist extends Component {
           }
 
           {
-            !isFetching && !error && !!items.length &&
+            !isFetching && !error && !!items.length && searchType === 'artist' &&
               <div className={styles.searchResults}>
                 {
                   items.map((item) => {
                     return (
                       <AddNewArtistSearchResultConnector
                         key={item.foreignArtistId}
+                        {...item}
+                      />
+                    );
+                  })
+                }
+              </div>
+          }
+
+          {
+            !isFetching && !error && !!items.length && searchType === 'album' &&
+              <div className={styles.searchResults}>
+                {
+                  items.map((item) => {
+                    return (
+                      <AddNewArtistAlbumSearchResultConnector
+                        key={item.foreignAlbumId}
                         {...item}
                       />
                     );
@@ -155,10 +211,18 @@ class AddNewArtist extends Component {
           }
 
           {
-            !term &&
+            !term && searchType === 'artist' &&
               <div className={styles.message}>
                 <div className={styles.helpText}>It's easy to add a new artist, just start typing the name the artist you want to add.</div>
                 <div>You can also search using MusicBrainz ID of an artist. eg. lidarr:cc197bad-dc9c-440d-a5b5-d52ba2e14234</div>
+              </div>
+          }
+
+          {
+            !term && searchType === 'album' &&
+              <div className={styles.message}>
+                <div className={styles.helpText}>It's easy to add a new album, just start typing the name the album you want to add.</div>
+                <div>You can also search using MusicBrainz ID of an album. eg. lidarr:9a03d313-0580-3f71-ae10-0e0996db3faa</div>
               </div>
           }
 
@@ -171,13 +235,15 @@ class AddNewArtist extends Component {
 
 AddNewArtist.propTypes = {
   term: PropTypes.string,
+  searchType: PropTypes.string,
   isFetching: PropTypes.bool.isRequired,
   error: PropTypes.object,
   isAdding: PropTypes.bool.isRequired,
   addError: PropTypes.object,
   items: PropTypes.arrayOf(PropTypes.object).isRequired,
   onArtistLookupChange: PropTypes.func.isRequired,
-  onClearArtistLookup: PropTypes.func.isRequired
+  onClearArtistLookup: PropTypes.func.isRequired,
+  onAlbumLookupChange: PropTypes.func.isRequired
 };
 
 export default AddNewArtist;

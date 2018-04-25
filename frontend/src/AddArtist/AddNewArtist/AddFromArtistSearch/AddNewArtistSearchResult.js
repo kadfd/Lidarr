@@ -9,7 +9,7 @@ import Icon from 'Components/Icon';
 import Label from 'Components/Label';
 import Link from 'Components/Link/Link';
 import ArtistPoster from 'Artist/ArtistPoster';
-import AddNewArtistModal from './AddNewArtistModal';
+import AddNewArtistModal from '../AddNewArtistModal';
 import styles from './AddNewArtistSearchResult.css';
 
 const columnPadding = parseInt(dimensions.artistIndexColumnPadding);

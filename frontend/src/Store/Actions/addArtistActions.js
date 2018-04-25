@@ -27,6 +27,7 @@ export const defaultState = {
   isAdding: false,
   isAdded: false,
   addError: null,
+  searchType: 'artist',
   items: [],
 
   defaults: {
@@ -48,6 +49,7 @@ export const persistState = [
 // Actions Types
 
 export const LOOKUP_ARTIST = 'addArtist/lookupArtist';
+export const LOOKUP_ALBUM = 'addArtist/lookupAlbum';
 export const ADD_ARTIST = 'addArtist/addArtist';
 export const SET_ADD_ARTIST_VALUE = 'addArtist/setAddArtistValue';
 export const CLEAR_ADD_ARTIST = 'addArtist/clearAddArtist';
@@ -57,6 +59,7 @@ export const SET_ADD_ARTIST_DEFAULT = 'addArtist/setAddArtistDefault';
 // Action Creators
 
 export const lookupArtist = createThunk(LOOKUP_ARTIST);
+export const lookupAlbum = createThunk(LOOKUP_ALBUM);
 export const addArtist = createThunk(ADD_ARTIST);
 export const clearAddArtist = createAction(CLEAR_ADD_ARTIST);
 export const setAddArtistDefault = createAction(SET_ADD_ARTIST_DEFAULT);
@@ -75,6 +78,7 @@ export const actionHandlers = handleThunks({
 
   [LOOKUP_ARTIST]: function(getState, payload, dispatch) {
     dispatch(set({ section, isFetching: true }));
+    dispatch(set({ section, searchType: 'artist' }));
 
     if (abortCurrentRequest) {
       abortCurrentRequest();
@@ -112,11 +116,56 @@ export const actionHandlers = handleThunks({
     });
   },
 
+  [LOOKUP_ALBUM]: function(getState, payload, dispatch) {
+    dispatch(set({ section, isFetching: true }));
+    dispatch(set({ section, searchType: 'album' }));
+
+    if (abortCurrentRequest) {
+      abortCurrentRequest();
+    }
+
+    const { request, abortRequest } = createAjaxRequest({
+      url: '/album/lookup',
+      data: {
+        term: payload.term
+      }
+    });
+
+    abortCurrentRequest = abortRequest;
+
+    request.done((data) => {
+      dispatch(batchActions([
+        update({ section, data }),
+
+        set({
+          section,
+          isFetching: false,
+          isPopulated: true,
+          error: null
+        })
+      ]));
+    });
+
+    request.fail((xhr) => {
+      dispatch(set({
+        section,
+        isFetching: false,
+        isPopulated: false,
+        error: xhr.aborted ? null : xhr
+      }));
+    });
+  },
+
   [ADD_ARTIST]: function(getState, payload, dispatch) {
     dispatch(set({ section, isAdding: true }));
 
     const foreignArtistId = payload.foreignArtistId;
-    const items = getState().addArtist.items;
+    let items = getState().addArtist.items;
+
+    if (getState().addArtist.searchType !== 'artist') {
+      items = _.map(getState().addArtist.items, 'artist');
+    }
+
     const newArtist = getNewArtist(_.cloneDeep(_.find(items, { foreignArtistId })), payload);
 
     const promise = $.ajax({

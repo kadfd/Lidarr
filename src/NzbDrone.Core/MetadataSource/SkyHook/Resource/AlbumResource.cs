@@ -17,6 +17,7 @@ namespace NzbDrone.Core.MetadataSource.SkyHook.Resource
         public string Url { get; set; } // Link to the endpoint api to give full info for this object
         public string Id { get; set; } // This is a unique Album ID. Needed for all future API calls
         public DateTime ReleaseDate { get; set; }
+        public string Disambiguation { get; set; }
         public List<ImageResource> Images { get; set; }
         public string Title { get; set; }
         public string Overview { get; set; }

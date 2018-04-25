@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { createSelector } from 'reselect';
 import queryString from 'query-string';
-import { lookupArtist, clearAddArtist } from 'Store/Actions/addArtistActions';
+import { lookupArtist, lookupAlbum, clearAddArtist } from 'Store/Actions/addArtistActions';
 import { fetchRootFolders } from 'Store/Actions/rootFolderActions';
 import AddNewArtist from './AddNewArtist';
 
@@ -24,6 +24,7 @@ function createMapStateToProps() {
 
 const mapDispatchToProps = {
   lookupArtist,
+  lookupAlbum,
   clearAddArtist,
   fetchRootFolders
 };
@@ -68,6 +69,20 @@ class AddNewArtistConnector extends Component {
     }
   }
 
+  onAlbumLookupChange = (term) => {
+    if (this._artistLookupTimeout) {
+      clearTimeout(this._artistLookupTimeout);
+    }
+
+    if (term.trim() === '') {
+      this.props.clearAddArtist();
+    } else {
+      this._artistLookupTimeout = setTimeout(() => {
+        this.props.lookupAlbum({ term });
+      }, 300);
+    }
+  }
+
   onClearArtistLookup = () => {
     this.props.clearAddArtist();
   }
@@ -86,6 +101,7 @@ class AddNewArtistConnector extends Component {
         term={term}
         {...otherProps}
         onArtistLookupChange={this.onArtistLookupChange}
+        onAlbumLookupChange={this.onAlbumLookupChange}
         onClearArtistLookup={this.onClearArtistLookup}
       />
     );
@@ -96,6 +112,7 @@ AddNewArtistConnector.propTypes = {
   term: PropTypes.string,
   lookupArtist: PropTypes.func.isRequired,
   clearAddArtist: PropTypes.func.isRequired,
+  lookupAlbum: PropTypes.func.isRequired,
   fetchRootFolders: PropTypes.func.isRequired
 };
 

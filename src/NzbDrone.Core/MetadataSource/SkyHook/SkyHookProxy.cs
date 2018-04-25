@@ -231,7 +231,9 @@ namespace NzbDrone.Core.MetadataSource.SkyHook
 
                 var httpResponse = _httpClient.Get<List<AlbumResource>>(httpRequest);
 
-                return httpResponse.Resource.SelectList(MapSearhResult);
+                var albumResults = httpResponse.Resource.SelectList(MapSearhResult);
+
+                return albumResults;
             }
             catch (HttpException)
             {
@@ -255,6 +257,11 @@ namespace NzbDrone.Core.MetadataSource.SkyHook
         {
             var album = _albumService.FindById(resource.Id) ?? MapAlbum(resource);
 
+            if (album.Artist == null)
+            {
+                album.Artist = _artistService.FindById(resource.Artist.Id);
+            }
+
             return album;
         }
 
@@ -262,6 +269,7 @@ namespace NzbDrone.Core.MetadataSource.SkyHook
         {
             Album album = new Album();
             album.Title = resource.Title;
+            album.Disambiguation = resource.Disambiguation;
             album.ForeignAlbumId = resource.Id;
             album.ReleaseDate = resource.ReleaseDate;
             album.CleanTitle = Parser.Parser.CleanArtistName(album.Title);
@@ -291,7 +299,6 @@ namespace NzbDrone.Core.MetadataSource.SkyHook
                     Name = resource.Artist.Name
                 };
             }
-            
 
             return album;
         }
